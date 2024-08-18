@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentRotation = 0;
     let timerId;
     let score = 0;
+    let highScore = localStorage.getItem('highScore') || 0;
 
     // Die Tetrominoes
     const lTetromino = [
@@ -44,7 +45,24 @@ document.addEventListener('DOMContentLoaded', () => {
         [width, width+1, width+2, width+3]
     ];
 
-    const theTetrominoes = [lTetromino, zTetromino, tTetromino, oTetromino, iTetromino];
+    const jTetromino = [
+        [1, width+1, width*2+1, 0],
+        [width, width+1, width+2, width*2+2],
+        [1, width+1, width*2+1, width*2+2],
+        [width, width+1, width+2, 0]
+    ];
+
+    const sTetromino = [
+        [1, width, width+1, width*2],
+        [width, width+1, width*2+1, width*2+2],
+        [1, width, width+1, width*2],
+        [width, width+1, width*2+1, width*2+2]
+    ];
+
+    const theTetrominoes = [
+        lTetromino, zTetromino, tTetromino, oTetromino,
+        iTetromino, jTetromino, sTetromino
+    ];
 
     let random = Math.floor(Math.random() * theTetrominoes.length);
     let current = theTetrominoes[random][currentRotation];
@@ -137,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = [i, i+1, i+2, i+3, i+4, i+5, i+6, i+7, i+8, i+9];
             if (row.every(index => squares[index].classList.contains('taken'))) {
                 score += 10;
-                scoreDisplay.innerHTML = 'Score: ' + score;
+                scoreDisplay.innerHTML = 'Score: ' + score + ' | Highscore: ' + highScore;
                 row.forEach(index => {
                     squares[index].classList.remove('taken');
                     squares[index].classList.remove('active');
@@ -152,12 +170,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Spielende
     function gameOver() {
         if (current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
-            scoreDisplay.innerHTML = 'Game Over';
+            scoreDisplay.innerHTML = 'Game Over | Score: ' + score + ' | Highscore: ' + highScore;
             clearInterval(timerId);
+            // Aktualisiere Highscore
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+            }
         }
     }
 
     // Starte das Spiel
+    scoreDisplay.innerHTML = 'Score: ' + score + ' | Highscore: ' + highScore;
     timerId = setInterval(moveDown, 1000);
 });
-
