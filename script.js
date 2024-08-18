@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const grid = document.querySelector('.grid');
     const scoreDisplay = document.querySelector('.score');
+    const pauseButton = document.createElement('button');
     const width = 10;
     let squares = Array.from(grid.querySelectorAll('div'));
     let currentPosition = 4;
@@ -8,8 +9,25 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerId;
     let score = 0;
     let highScore = localStorage.getItem('highScore') || 0;
+    let level = 1;
+    let fallSpeed = 1000;
+    let isPaused = false;
 
-    // Die Tetrominoes
+    pauseButton.textContent = 'Pause';
+    document.body.appendChild(pauseButton);
+
+    pauseButton.addEventListener('click', () => {
+        if (isPaused) {
+            timerId = setInterval(moveDown, fallSpeed);
+            pauseButton.textContent = 'Pause';
+            isPaused = false;
+        } else {
+            clearInterval(timerId);
+            pauseButton.textContent = 'Fortsetzen';
+            isPaused = true;
+        }
+    });
+
     const lTetromino = [
         [1, width+1, width*2+1, 2],
         [width, width+1, width+2, width*2+2],
@@ -67,21 +85,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let random = Math.floor(Math.random() * theTetrominoes.length);
     let current = theTetrominoes[random][currentRotation];
 
-    // Zeichne das Tetromino
     function draw() {
         current.forEach(index => {
             squares[currentPosition + index].classList.add('active');
         });
     }
 
-    // Lösche das Tetromino
     function undraw() {
         current.forEach(index => {
             squares[currentPosition + index].classList.remove('active');
         });
     }
 
-    // Tetromino bewegen
     function moveDown() {
         undraw();
         currentPosition += width;
@@ -89,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
         freeze();
     }
 
-    // Steuerung mit den Pfeiltasten
     function control(e) {
         if (e.keyCode === 37) {
             moveLeft();
@@ -103,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     document.addEventListener('keydown', control);
 
-    // Bewege das Tetromino nach links
     function moveLeft() {
         undraw();
         const isAtLeftEdge = current.some(index => (currentPosition + index) % width === 0);
@@ -114,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         draw();
     }
 
-    // Bewege das Tetromino nach rechts
     function moveRight() {
         undraw();
         const isAtRightEdge = current.some(index => (currentPosition + index) % width === width - 1);
@@ -125,7 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
         draw();
     }
 
-    // Drehe das Tetromino
     function rotate() {
         undraw();
         currentRotation++;
@@ -136,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
         draw();
     }
 
-    // Überprüfe ob das Tetromino den Boden oder ein anderes Tetromino erreicht hat
     function freeze() {
         if (current.some(index => squares[currentPosition + index + width].classList.contains('taken'))) {
             current.forEach(index => squares[currentPosition + index].classList.add('taken'));
@@ -149,13 +159,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Punkte hinzufügen
     function addScore() {
         for (let i = 0; i < 199; i += width) {
             const row = [i, i+1, i+2, i+3, i+4, i+5, i+6, i+7, i+8, i+9];
             if (row.every(index => squares[index].classList.contains('taken'))) {
                 score += 10;
-                scoreDisplay.innerHTML = 'Score: ' + score + ' | Highscore: ' + highScore;
+                if (score % 50 === 0) { // Steige alle 50 Punkte ein Level auf
+                    levelUp();
+                }
+                scoreDisplay.innerHTML = `Score: ${score} | Highscore: ${highScore} | Level: ${level}`;
                 row.forEach(index => {
                     squares[index].classList.remove('taken');
                     squares[index].classList.remove('active');
@@ -167,12 +179,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Spielende
+    function levelUp() {
+        level++;
+        fallSpeed *= 0.9; // Erhöhe die Geschwindigkeit um 10%
+        clearInterval(timerId);
+        timerId = setInterval(moveDown, fallSpeed);
+    }
+
     function gameOver() {
         if (current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
-            scoreDisplay.innerHTML = 'Game Over | Score: ' + score + ' | Highscore: ' + highScore;
+            scoreDisplay.innerHTML = `Game Over | Score: ${score} | Highscore: ${highScore}`;
             clearInterval(timerId);
-            // Aktualisiere Highscore
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('highScore', highScore);
@@ -180,7 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Starte das Spiel
-    scoreDisplay.innerHTML = 'Score: ' + score + ' | Highscore: ' + highScore;
-    timerId = setInterval(moveDown, 1000);
+    scoreDisplay.innerHTML = `Score: ${score} | Highscore: ${highScore} | Level: ${level}`;
+    timerId = setInterval(moveDown, fallSpeed);
 });
