@@ -209,7 +209,7 @@
                             squares[index].classList.remove('active');
                         });
                         const squaresRemoved = squares.splice(i, width);
-                        squares = squaresRemoved.concat(squares);
+                        squares = squares.concat(squaresRemoved);
                         squares.forEach(cell => grid.appendChild(cell));
                     }
                 }
